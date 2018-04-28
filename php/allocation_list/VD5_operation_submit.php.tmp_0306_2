@@ -1,0 +1,49 @@
+<?php
+//********************************************************************************************// 
+// Filename: 
+// Author: Xiang Zuo
+// Version: 1.0
+// Create Date: 2018/02/06
+// Function: 
+// Input files: 
+// Output: 
+//********************************************************************************************// 
+
+include(__DIR__ . '/Database_Connect.php');
+
+header('Content-Type: text/html; charset=UTF-8');
+$ID=$_POST['ID'];
+$Priority=$_POST['Priority'];
+$ApproveDate=$_POST['ApproveDate'];
+$TranslatorID=$_POST['TranslatorID'];
+$ReviewerID=$_POST['ReviewerID'];
+var_dump($ID);die();
+//** get the records count of VariantDesc
+$n=0;
+$variantdesc_query="SELECT VariantDesc.VariantDesc_en,VariantDesc.CreateDate,VariantDesc.VariantDescID,Gene.Symbol,Variant.HGVSp,VariantDesc.Count,VariantDesc.Status,b.FirstName as TranslatorFirstName,b.MiddleName as TranslatorMiddleName,b.LastName as TranslatorLastName,c.FirstName as ReviewerFirstName,c.MiddleName as ReviewerMiddleName,c.LastName as ReviewerLastName,VariantDesc.TranslationDate FROM VariantDesc JOIN Variant ON VariantDesc.VariantID=Variant.VariantID JOIN Transcript ON Transcript.TranscriptID=Variant.TranscriptID JOIN Gene ON Gene.GeneID=Transcript.GeneID JOIN Employee as b ON VariantDesc.TranslatorID=b.EmployeeID JOIN Employee as c ON VariantDesc.ReviewerID=c.EmployeeID";
+$result = $mysql_link->query($variantdesc_query);
+while($row = $result->fetch_assoc()) {
+    $n++;
+}
+echo '<pre>';
+print_r($ID);
+print_r($n).PHP_EOL;
+die();
+foreach($ID as $key=>$value){
+	updateOperation($value,$n);
+}
+function updateOperation($ID,$n){
+
+if($ID<=$n){
+#	$query="UPDATE VariantDesc SET Status=3,TranslatorID=\"$TranslatorID\",ReviewerID=\"$ReviewerID\",AllocationDate=\"$ApproveDate\",Priority=\"$Priority\" WHERE VariantDescID=\"$ID\";";
+	$query="UPDATE VariantDesc SET Status=3,Count=Count+1,TranslatorID=\"$TranslatorID\",ReviewerID=\"$ReviewerID\",AllocationDate=\"$ApproveDate\",Priority=\"$Priority\" WHERE VariantDescID=\"$ID\";";
+	$query.="INSERT INTO VariantDescRecords (VariantDescID,Priority,TranslatorID,ReviewerID,AllocationDate) VALUES (\"$ID\",\"$Priority\",\"$TranslatorID\",\"$ReviewerID\",\"$ApproveDate\")"; 
+}else{
+#	$query="UPDATE GeneIntro SET Status=3,TranslatorID=\"$TranslatorID\",ReviewerID=\"$ReviewerID\",AllocationDate=\"$ApproveDate\",Priority=\"$Priority\" WHERE GeneIntroID=\"$ID\"-$n;";
+	$query="UPDATE GeneIntro SET Status=3,Count=Count+1,TranslatorID=\"$TranslatorID\",ReviewerID=\"$ReviewerID\",AllocationDate=\"$ApproveDate\",Priority=\"$Priority\" WHERE GeneIntroID=\"$ID\"-$n;";
+	$query.="INSERT INTO GeneIntroRecords (GeneIntroID,Priority,TranslatorID,ReviewerID,AllocationDate) VALUES (\"$ID\"-$n,\"$Priority\",\"$TranslatorID\",\"$ReviewerID\",\"$ApproveDate\")";
+}
+
+	$mysql_link->multi_query($query);
+}
+?>

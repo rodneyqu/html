@@ -1,0 +1,127 @@
+<?php
+//********************************************************************************************// 
+// Filename: VD19.php
+// Author: Xiang Zuo
+// Version: 1.0
+// Create Date: 2018/02/02
+// Function: Search by a key word, there are 3 ways, by item number,pdot information or gene symbol
+// Input files: Database_Connect.php
+// Output: Get the browse list of Variant Description database
+//********************************************************************************************// 
+
+//** Database_Connect.php, connected to the mysql database//
+include(__DIR__ . '/Database_Connect.php');
+
+header('Content-Type: text/html; charset=UTF-8');
+$keyword=$_POST['KeyWord'];
+$database=$_POST['Database'];
+$Status=$_POST['Status'];
+//** get the records count of VariantDesc
+$n=0;
+$variantdesc_query="SELECT VariantDesc.VariantDesc_en,VariantDesc.CreateDate,VariantDesc.VariantDescID,Gene.Symbol,Variant.HGVSp,VariantDesc.Count,VariantDesc.Status,b.FirstName as TranslatorFirstName,b.MiddleName as TranslatorMiddleName,b.LastName as TranslatorLastName,c.FirstName as ReviewerFirstName,c.MiddleName as ReviewerMiddleName,c.LastName as ReviewerLastName,VariantDesc.TranslationDate FROM VariantDesc JOIN Variant ON VariantDesc.VariantID=Variant.VariantID JOIN Transcript ON Transcript.TranscriptID=Variant.TranscriptID JOIN Gene ON Gene.GeneID=Transcript.GeneID JOIN Employee as b ON VariantDesc.TranslatorID=b.EmployeeID JOIN Employee as c ON VariantDesc.ReviewerID=c.EmployeeID";
+$result = $mysql_link->query($variantdesc_query);
+while($row = $result->fetch_assoc()) {
+    $n++;
+}
+
+$variantdesc_array = array();
+if($database=='VariantDesc'){          #select database VariantDesc
+	if (preg_match("/^p\./",$keyword)){          //search by HGVSp
+#		$variantdesc_query="SELECT VariantDesc.VariantDesc_en,VariantDesc.CreateDate,VariantDesc.VariantDescID,Gene.Symbol,Variant.HGVSp,VariantDesc.Count,VariantDesc.Status FROM VariantDesc JOIN Variant ON VariantDesc.VariantID=Variant.VariantID JOIN Transcript ON Transcript.TranscriptID=Variant.TranscriptID JOIN Gene ON Gene.GeneID=Transcript.GeneID WHERE Variant.HGVSp=\"$keyword\"";
+		$variantdesc_query="SELECT VariantDesc.VariantDesc_en,VariantDesc.CreateDate,VariantDesc.VariantDescID,Gene.Symbol,Variant.HGVSp,VariantDesc.Count,VariantDesc.Status,b.FirstName as TranslatorFirstName,b.MiddleName as TranslatorMiddleName,b.LastName as TranslatorLastName,c.FirstName as ReviewerFirstName,c.MiddleName as ReviewerMiddleName,c.LastName as ReviewerLastName,VariantDesc.TranslationDate FROM VariantDesc JOIN Variant ON VariantDesc.VariantID=Variant.VariantID JOIN Transcript ON Transcript.TranscriptID=Variant.TranscriptID JOIN Gene ON Gene.GeneID=Transcript.GeneID JOIN Employee as b ON VariantDesc.TranslatorID=b.EmployeeID JOIN Employee as c ON VariantDesc.ReviewerID=c.EmployeeID WHERE Variant.HGVSp=\"$keyword\" or VariantDesc.Status=\"$Status\"" ;
+	}elseif(empty($keyword)){
+#		$variantdesc_query="SELECT VariantDesc.VariantDesc_en,VariantDesc.CreateDate,VariantDesc.VariantDescID,Gene.Symbol,Variant.HGVSp,VariantDesc.Count,VariantDesc.Status FROM VariantDesc JOIN Variant ON VariantDesc.VariantID=Variant.VariantID JOIN Transcript ON Transcript.TranscriptID=Variant.TranscriptID JOIN Gene ON Gene.GeneID=Transcript.GeneID";
+		$variantdesc_query="SELECT VariantDesc.VariantDesc_en,VariantDesc.CreateDate,VariantDesc.VariantDescID,Gene.Symbol,Variant.HGVSp,VariantDesc.Count,VariantDesc.Status,b.FirstName as TranslatorFirstName,b.MiddleName as TranslatorMiddleName,b.LastName as TranslatorLastName,c.FirstName as ReviewerFirstName,c.MiddleName as ReviewerMiddleName,c.LastName as ReviewerLastName,VariantDesc.TranslationDate FROM VariantDesc JOIN Variant ON VariantDesc.VariantID=Variant.VariantID JOIN Transcript ON Transcript.TranscriptID=Variant.TranscriptID JOIN Gene ON Gene.GeneID=Transcript.GeneID JOIN Employee as b ON VariantDesc.TranslatorID=b.EmployeeID JOIN Employee as c ON VariantDesc.ReviewerID=c.EmployeeID where VariantDesc.Status=\"$Status\"";
+	}else{            #keyword:gene
+#		$variantdesc_query="SELECT VariantDesc.VariantDesc_en,VariantDesc.CreateDate,VariantDesc.VariantDescID,Gene.Symbol,Variant.HGVSp,VariantDesc.Count,VariantDesc.Status FROM VariantDesc JOIN Variant ON VariantDesc.VariantID=Variant.VariantID JOIN Transcript ON Transcript.TranscriptID=Variant.TranscriptID JOIN Gene ON Gene.GeneID=Transcript.GeneID WHERE Gene.Symbol=\"$keyword\"";
+		$variantdesc_query="SELECT VariantDesc.VariantDesc_en,VariantDesc.CreateDate,VariantDesc.VariantDescID,Gene.Symbol,Variant.HGVSp,VariantDesc.Count,VariantDesc.Status,b.FirstName as TranslatorFirstName,b.MiddleName as TranslatorMiddleName,b.LastName as TranslatorLastName,c.FirstName as ReviewerFirstName,c.MiddleName as ReviewerMiddleName,c.LastName as ReviewerLastName,VariantDesc.TranslationDate FROM VariantDesc JOIN Variant ON VariantDesc.VariantID=Variant.VariantID JOIN Transcript ON Transcript.TranscriptID=Variant.TranscriptID JOIN Gene ON Gene.GeneID=Transcript.GeneID JOIN Employee as b ON VariantDesc.TranslatorID=b.EmployeeID JOIN Employee as c ON VariantDesc.ReviewerID=c.EmployeeID WHERE Gene.Symbol=\"$keyword\" or VariantDesc.Status=\"$Status\"";
+	}
+	$result = $mysql_link->query($variantdesc_query);
+	while($row = $result->fetch_assoc()) {
+    		$arr['VariantDesc_en'] = $row['VariantDesc_en'];
+		$arr['CreateDate'] = $row['CreateDate'];
+		$arr['ID'] = $row['VariantDescID'];
+		$arr['KeyWord'] = $row['Symbol'] . " " . $row['HGVSp'];
+		$arr['Database']='VariantDesc';
+		$arr['Count'] = $row['Count'];
+		$arr['Status'] = $row['Status'];
+		$arr['Translator'] = $row['TranslatorLastName'].$row['TranslatorMiddleName'].$row['TranslatorFirstName'];
+		$arr['Reviewer'] = $row['ReviewerLastName'].$row['ReviewerMiddleName'].$row['ReviewerFirstName'];
+		$arr['TranslationDate'] = $row['TranslationDate'];
+		array_push($variantdesc_array['list'], $arr);
+	}
+}elseif($database=='GeneIntro'){          #select database GeneIntro
+	if(empty($keyword)){
+#		$variantdesc_query="SELECT GeneIntro.GeneIntr_en,GeneIntro.CreateDate,GeneIntro.GeneIntroID,Gene.Symbol,GeneIntro.Count,GeneIntro.Status FROM GeneIntro JOIN Gene ON GeneIntro.GeneID=Gene.GeneID";
+		$variantdesc_query="SELECT GeneIntro.GeneIntr_en,GeneIntro.CreateDate,GeneIntro.GeneIntroID,Gene.Symbol,GeneIntro.Count,GeneIntro.Status,b.FirstName as TranslatorFirstName,b.MiddleName as TranslatorMiddleName,b.LastName as TranslatorLastName,c.FirstName as ReviewerFirstName,c.MiddleName as ReviewerMiddleName,c.LastName as ReviewerLastName,GeneIntro.TranslationDate FROM GeneIntro JOIN Gene ON GeneIntro.GeneID=Gene.GeneID JOIN Employee as b ON GeneIntro.TranslatorID=b.EmployeeID JOIN Employee as c ON GeneIntro.ReviewerID=c.EmployeeID where GeneIntro.Status=\"$Status\"";
+	}else{        #keyword:gene
+#		$variantdesc_query="SELECT GeneIntro.GeneIntr_en,GeneIntro.CreateDate,GeneIntro.GeneIntroID,Gene.Symbol,GeneIntro.Count,GeneIntro.Status FROM GeneIntro JOIN Gene ON GeneIntro.GeneID=Gene.GeneID WHERE Gene.Symbol=\"$keyword\"";
+		$variantdesc_query="SELECT GeneIntro.GeneIntr_en,GeneIntro.CreateDate,GeneIntro.GeneIntroID,Gene.Symbol,GeneIntro.Count,GeneIntro.Status,b.FirstName as TranslatorFirstName,b.MiddleName as TranslatorMiddleName,b.LastName as TranslatorLastName,c.FirstName as ReviewerFirstName,c.MiddleName as ReviewerMiddleName,c.LastName as ReviewerLastName,GeneIntro.TranslationDate FROM GeneIntro JOIN Gene ON GeneIntro.GeneID=Gene.GeneID JOIN Employee as b ON GeneIntro.TranslatorID=b.EmployeeID JOIN Employee as c ON GeneIntro.ReviewerID=c.EmployeeID WHERE Gene.Symbol=\"$keyword\" or GeneIntro.Status=\"$Status\"";
+	}
+	$result = $mysql_link->query($variantdesc_query);
+	while($row = $result->fetch_assoc()) {
+		$arr['VariantDesc_en'] = $row['GeneIntr_en'];
+		$arr['CreateDate'] = $row['CreateDate'];
+		$arr['ID'] = $n+$row['GeneIntroID'];
+		$arr['KeyWord'] = $row['Symbol'];
+		$arr['Database']='GeneIntro';
+		$arr['Count'] = $row['Count'];
+		$arr['Status'] = $row['Status'];
+		$arr['Translator'] = $row['TranslatorLastName'].$row['TranslatorMiddleName'].$row['TranslatorFirstName'];
+                $arr['Reviewer'] = $row['ReviewerLastName'].$row['ReviewerMiddleName'].$row['ReviewerFirstName'];
+                $arr['TranslationDate'] = $row['TranslationDate'];
+		array_push($variantdesc_array['list'], $arr);
+	}
+}elseif(empty($database)){
+	if(preg_match("/^p\./",$keyword)){
+#		$variantdesc_query="SELECT VariantDesc.VariantDesc_en,VariantDesc.CreateDate,VariantDesc.VariantDescID,Gene.Symbol,Variant.HGVSp,VariantDesc.Count,VariantDesc.Status FROM VariantDesc JOIN Variant ON VariantDesc.VariantID=Variant.VariantID JOIN Transcript ON Transcript.TranscriptID=Variant.TranscriptID JOIN Gene ON Gene.GeneID=Transcript.GeneID WHERE Variant.HGVSp=\"$keyword\"";
+		$variantdesc_query="SELECT VariantDesc.VariantDesc_en,VariantDesc.CreateDate,VariantDesc.VariantDescID,Gene.Symbol,Variant.HGVSp,VariantDesc.Count,VariantDesc.Status,b.FirstName as TranslatorFirstName,b.MiddleName as TranslatorMiddleName,b.LastName as TranslatorLastName,c.FirstName as ReviewerFirstName,c.MiddleName as ReviewerMiddleName,c.LastName as ReviewerLastName,VariantDesc.TranslationDate FROM VariantDesc JOIN Variant ON VariantDesc.VariantID=Variant.VariantID JOIN Transcript ON Transcript.TranscriptID=Variant.TranscriptID JOIN Gene ON Gene.GeneID=Transcript.GeneID JOIN Employee as b ON VariantDesc.TranslatorID=b.EmployeeID JOIN Employee as c ON VariantDesc.ReviewerID=c.EmployeeID WHERE Variant.HGVSp=\"$keyword\" or VariantDesc.Status=\"$Status\"";
+		$result = $mysql_link->query($variantdesc_query);
+                while($row = $result->fetch_assoc()) {
+                        $arr['VariantDesc_en'] = $row['VariantDesc_en'];
+                        $arr['CreateDate'] = $row['CreateDate'];
+                        $arr['ID'] = $row['VariantDescID'];
+                        $arr['KeyWord'] = $row['Symbol'] . " " . $row['HGVSp'];
+                        $arr['Database']='VariantDesc';
+                        $arr['Count'] = $row['Count'];
+                        $arr['Status'] = $row['Status'];
+			$arr['Translator'] = $row['TranslatorLastName'].$row['TranslatorMiddleName'].$row['TranslatorFirstName'];
+        	        $arr['Reviewer'] = $row['ReviewerLastName'].$row['ReviewerMiddleName'].$row['ReviewerFirstName'];
+	                $arr['TranslationDate'] = $row['TranslationDate'];
+                        array_push($variantdesc_array['list'], $arr);
+                }
+	}elseif(preg_match("/^[\w\d]+$/",$keyword)){
+		$variantdesc_query="SELECT VariantDesc.VariantDesc_en,VariantDesc.CreateDate,VariantDesc.VariantDescID,Gene.Symbol,Variant.HGVSp,VariantDesc.Count,VariantDesc.Status,b.FirstName as TranslatorFirstName,b.MiddleName as TranslatorMiddleName,b.LastName as TranslatorLastName,c.FirstName as ReviewerFirstName,c.MiddleName as ReviewerMiddleName,c.LastName as ReviewerLastName,VariantDesc.TranslationDate FROM VariantDesc JOIN Variant ON VariantDesc.VariantID=Variant.VariantID JOIN Transcript ON Transcript.TranscriptID=Variant.TranscriptID JOIN Gene ON Gene.GeneID=Transcript.GeneID JOIN Employee as b ON VariantDesc.TranslatorID=b.EmployeeID JOIN Employee as c ON VariantDesc.ReviewerID=c.EmployeeID WHERE Gene.Symbol=\"$keyword\" or VariantDesc.Status=\"$Status\"";
+		$variantdesc_query1="SELECT GeneIntro.GeneIntr_en,GeneIntro.CreateDate,GeneIntro.GeneIntroID,Gene.Symbol,GeneIntro.Count,GeneIntro.Status,b.FirstName as TranslatorFirstName,b.MiddleName as TranslatorMiddleName,b.LastName as TranslatorLastName,c.FirstName as ReviewerFirstName,c.MiddleName as ReviewerMiddleName,c.LastName as ReviewerLastName,GeneIntro.TranslationDate FROM GeneIntro JOIN Gene ON GeneIntro.GeneID=Gene.GeneID JOIN Employee as b ON GeneIntro.TranslatorID=b.EmployeeID JOIN Employee as c ON GeneIntro.ReviewerID=c.EmployeeID WHERE Gene.Symbol=\"$keyword\" or GeneIntro.Status=\"$Status\"";
+		$result = $mysql_link->query($variantdesc_query);
+	        while($row = $result->fetch_assoc()) {
+        	        $arr['VariantDesc_en'] = $row['VariantDesc_en'];
+                	$arr['CreateDate'] = $row['CreateDate'];
+                	$arr['ID'] = $row['VariantDescID'];
+	                $arr['KeyWord'] = $row['Symbol'] . " " . $row['HGVSp'];
+        	        $arr['Database']='VariantDesc';
+                	$arr['Count'] = $row['Count'];
+	                $arr['Status'] = $row['Status'];
+			$arr['Translator'] = $row['TranslatorLastName'].$row['TranslatorMiddleName'].$row['TranslatorFirstName'];
+        	        $arr['Reviewer'] = $row['ReviewerLastName'].$row['ReviewerMiddleName'].$row['ReviewerFirstName'];
+	                $arr['TranslationDate'] = $row['TranslationDate'];
+        	        array_push($variantdesc_array['list'], $arr);
+        	}
+		$result1 = $mysql_link->query($variantdesc_query1);
+	        while($row = $result1->fetch_assoc()) {
+        	        $arr['VariantDesc_en'] = $row['GeneIntr_en'];
+                	$arr['CreateDate'] = $row['CreateDate'];
+	                $arr['ID'] = $n+$row['GeneIntroID'];
+        	        $arr['KeyWord'] = $row['Symbol'];
+                	$arr['Database']='GeneIntro';
+	                $arr['Count'] = $row['Count'];
+        	        $arr['Status'] = $row['Status'];
+			$arr['Translator'] = $row['TranslatorLastName'].$row['TranslatorMiddleName'].$row['TranslatorFirstName'];
+        	        $arr['Reviewer'] = $row['ReviewerLastName'].$row['ReviewerMiddleName'].$row['ReviewerFirstName'];
+	                $arr['TranslationDate'] = $row['TranslationDate'];
+                	array_push($variantdesc_array['list'], $arr);
+		}
+	}
+}
+echo json_encode($variantdesc_array);
+?>

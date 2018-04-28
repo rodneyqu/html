@@ -1,0 +1,53 @@
+<?php
+//********************************************************************************************// 
+// Filename: VD22.php
+// Author: Xiang Zuo
+// Version: 1.0
+// Create Date: 2018/02/05
+// Function: 
+// Input files: 
+// Output: 
+//********************************************************************************************// 
+
+include(__DIR__ . '/Database_Connect.php');
+
+header('Content-Type: text/html; charset=UTF-8');
+$ID=$_POST['ID'];
+$status=$_POST['Status'];
+
+//** get the records count of VariantDesc
+$n=0;
+$variantdesc_query="SELECT VariantDesc.VariantDesc_en,VariantDesc.CreateDate,VariantDesc.VariantDescID,Gene.Symbol,Variant.HGVSp,VariantDesc.Count,VariantDesc.Status,b.FirstName as TranslatorFirstName,b.MiddleName as TranslatorMiddleName,b.LastName as TranslatorLastName,c.FirstName as ReviewerFirstName,c.MiddleName as ReviewerMiddleName,c.LastName as ReviewerLastName,VariantDesc.TranslationDate FROM VariantDesc JOIN Variant ON VariantDesc.VariantID=Variant.VariantID JOIN Transcript ON Transcript.TranscriptID=Variant.TranscriptID JOIN Gene ON Gene.GeneID=Transcript.GeneID JOIN Employee as b ON VariantDesc.TranslatorID=b.EmployeeID JOIN Employee as c ON VariantDesc.ReviewerID=c.EmployeeID";
+$result = $mysql_link->query($variantdesc_query);
+while($row = $result->fetch_assoc()) {
+    $n++;
+}
+
+/*
+if($ID<=$n){
+	$query="UPDATE VariantDesc SET Status=1 WHERE VariantDescID=\"$ID\" AND Status=0;";
+
+//	$query.="UPDATE VariantDesc SET Status=2 WHERE VariantDescID=\"$ID\" AND Status=1"; 
+}else{
+	$query="UPDATE GeneIntro SET Status=1 WHERE GeneIntroID=\"$ID\"-$n AND Status=0;";
+//	$query.="UPDATE GeneIntro SET Status=2 WHERE GeneIntroID=\"$ID\"-$n AND Status=1";
+}
+*/
+
+if($status=='0'){
+	if($ID<=$n){
+		$query="UPDATE VariantDesc SET Status=1 WHERE VariantDescID=\"$ID\" AND Status=0";
+	}else{
+		$query="UPDATE GeneIntro SET Status=1 WHERE GeneIntroID=\"$ID\"-$n AND Status=0";
+	}
+}
+if($status=='1'){
+	if($ID<=$n){
+		$query="UPDATE VariantDesc SET Status=2 WHERE VariantDescID=\"$ID\" AND Status=1";
+	}else{
+		$query="UPDATE GeneIntro SET Status=2 WHERE GeneIntroID=\"$ID\"-$n AND Status=1";
+	}
+}
+$mysql_link->query($query);
+#$mysql_link->multi_query($query);
+?>
